@@ -6,12 +6,15 @@ using namespace std;
 objPosBST::objPosBST()
 {
     // Constructor (Check Lecture Notes for Implementation, Simple)
+    root = nullptr;
 }
 
 objPosBST::~objPosBST()
 {
     // Destructor
     // Invoke delete tree, then set root to NULL
+    deleteTree(root);
+    root = nullptr;
 }
 
 void objPosBST::deleteTree(const TNode* thisNode)
@@ -20,6 +23,12 @@ void objPosBST::deleteTree(const TNode* thisNode)
 
     // Question from Class - Which Traversal Order should you use for this method?
     //   WARNING - using the wrong one will result in potential heap error.
+    if(thisNode == nullptr)
+        return;
+    deleteTree(thisNode->left);
+    deleteTree(thisNode->right);
+    delete thisNode;
+
 }
 
 // Public Interface, Implemented
@@ -33,6 +42,7 @@ bool objPosBST::isEmptyTree() const
 {
     // Check if tree is empty
     //  Really simple, think about how.
+    return (root == nullptr);
 }
 
 
@@ -40,6 +50,19 @@ bool objPosBST::isLeaf(const objPos &thisPos, const TNode* thisNode) const
 {
     // Check if thisPos in a Leaf Node.
     //  Remember, tree nodes are inserted using the Prefix member of objPos
+
+    if(thisNode == NULL)
+        return false;
+    else if(thisPos.getPF() < thisNode->data.getPF())
+        return isLeaf(thisPos, thisNode->left);
+    else if(thisPos.getPF() > thisNode->data.getPF())
+        return isLeaf(thisPos, thisNode->right);
+    else{
+        if(thisNode->left == nullptr && thisNode->right == nullptr)
+            return true;
+        else
+            return false;
+    }
 
     // Algorithm Suggestion:
     // 1. if the node is NULL, just return false
@@ -63,6 +86,11 @@ void objPosBST::printTree(const TNode* thisNode) const  // private recursive
 
     // print in the format of Prefix + Number
     // e.g.  N30 P25 etc.
+    if (thisNode == nullptr)
+        return;
+    printTree(thisNode->left);
+    cout << " " << thisNode->data.getPF() << " " << thisNode->data.getNum();
+    printTree(thisNode->right);
 
     // DO NOT use printObjPos() as it will mess up the game display.
 }
@@ -81,9 +109,17 @@ void objPosBST::printTree() const  // public interface
 int objPosBST::getHeight(const TNode* thisNode) const
 {
     // Tree Height Calculation Algorithm 
-
+    if(thisNode == nullptr)
+        return 0;
     // 1. If thisNode is null, height is zero.
-
+    else{
+        int left = getHeight(thisNode->left);
+        int right = getHeight(thisNode->right);
+        if(left > right)
+            return left;
+        else
+            return right;
+    }
     // 2. Otherwise, recursively invoke getHeight for the left and right subtree, and save
     //    the returned heights.
 
@@ -95,9 +131,16 @@ void objPosBST::printCurrentLevel(const TNode* thisNode, const int level) const
     // Recursive Level-Order Tree-Printing Algorithm 
     
     // 1. First check if at leaf node.  If yes, do not print anything
-
+    if(thisNode->left == nullptr && thisNode->right == nullptr)
+        return;
     // 2. Then, check if level is 1.  If yes, print the Prefix field only (specified in manual)
-
+    if(level == 1)
+        cout << thisNode->data.getPF() << " ";
+    else{
+        printCurrentLevel(thisNode->left, level - 1);
+        printCurrentLevel(thisNode->right, level - 1);
+        cout << endl;
+    }
     // 3. Otherwise, invoke recursively printCurrentLevel for left subtree with one less level, then
     //                                                        right subtree with one less level
     //    "if I'm not at the level, keep on searching into the left and the right subtrees"
@@ -110,6 +153,10 @@ void objPosBST::printCurrentLevel(const TNode* thisNode, const int level) const
 void objPosBST::printTreeLevel() const
 {
     // Interface to the Recursive Version of Level-Order Tree-Printing Algorithm 
+    int height = getHeight(root);
+    for(int i = 0; i < height; i++){
+        printCurrentLevel(root, i);
+    }
 
     // 1. Get the height of the tree
     // 2. For each level (bounded by height), invoke the recursive tree-printing algorithm.
@@ -122,8 +169,15 @@ bool objPosBST::isInTree(const objPos& thisPos, const TNode* thisNode) const
 {
     // Check if thisPos in in the tree.
     //  Remember, tree nodes are inserted using the Prefix member of objPos
-
-    // Algorithm Suggestion:
+    if(thisNode == nullptr)
+        return false;
+    else if(thisPos.getPF() < thisNode->data.getPF())
+        return isInTree(thisPos, thisNode->left);
+    else if(thisPos.getPF() > thisNode->data.getPF())
+        return isInTree(thisPos, thisNode->right);
+    else 
+        return true;
+        // Algorithm Suggestion:
     // 1. if the node is NULL, just return false
     // 2. Otherwise, compare Prefix of the data of the current node
     //    against the Prefix of thisPos
@@ -141,7 +195,22 @@ bool objPosBST::isInTree(const objPos &thisPos) const
 void objPosBST::insert(const objPos &thisPos, TNode* &thisNode)
 {
     // Insert objPos as a Node into the BST
-
+    if(thisNode == nullptr)
+    {
+        thisNode = new TNode(thisPos);
+    }
+    else if(thisPos.getPF() < thisNode->data.getPF())
+    {
+        insert(thisPos, thisNode->left);
+    }
+    else if(thisPos.getPF() > thisNode->data.getPF())
+    {
+        insert(thisPos, thisNode->right);
+    }
+    else
+    {
+        thisNode->data.setNum(thisPos.getNum() + thisNode->data.getNum());
+    }
     // Check Lecture Notes for general implementation
     //  Hint: Algorithm similar to isInTree.
 
@@ -161,7 +230,12 @@ void objPosBST::insert(const objPos &thisPos)
 const TNode* objPosBST::findMin(const TNode* thisNode) const
 {
 	// Find the node with the smallest prefix in the subtree from thisNode
+    if(thisNode == nullptr)
+        return nullptr;
+    while(thisNode->left != nullptr)
+        thisNode = thisNode->left;
 
+    return thisNode;
     // Used as part of remove() algorithm
 
     // Check Lecture Notes for implementation
@@ -171,7 +245,28 @@ const TNode* objPosBST::findMin(const TNode* thisNode) const
 void objPosBST::remove(const objPos &thisPos, TNode* &thisNode)
 {
 	// Remove the node with matching prefix of thisPos from the subtree thisNode
+    if(thisNode == nullptr)
+    {
+        return;
+    }
+    if(thisPos.getPF() < thisNode->data.getPF())
+    {
+        remove(thisPos, thisNode->left);
+    }
+    else if(thisPos.getPF() > thisNode->data.getPF())
+    {
+        remove(thisPos, thisNode->right);
+    }
+    else if(thisNode->left != nullptr && thisNode->right != nullptr){
 
+        thisNode->data = findMin(thisNode->right)->data;
+        remove(thisNode->data, thisNode->right);
+    }
+    else{
+        TNode* oldNode = thisNode;
+        thisNode = (thisNode->left != nullptr)? thisNode->left : thisNode->right;
+        delete oldNode;
+    }
     // *IMPORTANT* Check Lecture Notes for general implementation
     //  Remember the three removal case scenarios
 
@@ -195,9 +290,17 @@ bool objPosBST::findGreater(const int numThreshold, const TNode* thisNode) const
 
     // Algorithm Suggestion
     //  1. If tree empty, just return false
+    if(thisNode == nullptr)
+        return false;
     //  2. Recursively check if the any number on the LEFT subtree is greater than numThreshold
+    bool caseLeft = findGreater(numThreshold, thisNode->left);
     //  3. Recursively check if the any number on the RIGHT subtree is greater than numThreshold
+    bool caseRight = findGreater(numThreshold, thisNode->right);
     //  4. Then, check if the number field of the objPos data in the current node is greater than numThreshold
+    if((numThreshold < thisNode->data.getNum()) || caseRight || caseLeft)
+        return true;
+    else
+        return false;
     //  5. If any of the results from item 2, 3, and 4 is TRUE, return true.
     //     Otherwise, return false.
 

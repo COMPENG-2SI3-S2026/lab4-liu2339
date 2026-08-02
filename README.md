@@ -1,5 +1,5 @@
 # Lab 4 - Binary Search Tree
 
-Student Name: [Your Name Here]
+Student Name: Simon Liu
 
-MacID: [Your MacID Here]
+MacID: liu2339
